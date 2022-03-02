@@ -4,16 +4,18 @@ import React,{useState} from 'react'
 import firestore from '@react-native-firebase/firestore'
 export default function RegisterScreen({navigation}) {
   const [name,setName]=useState('');
+  var RandomNumber = Math.floor(Math.random() * 100) + 1 ;
   const registerUser=async()=>{
     if (!name) {
       alert('Please Add Fields..!!')
-      return
+      return;
     }
     try {
       firestore().collection('users').doc(name).set({
+        id:RandomNumber,
         name: name,
         isRequested:false
-      }).then((nav)=>navigation.navigate('CallScreen',{regUserName:name}))
+      }).then((nav)=>navigation.navigate('CallScreen',{regUserId:RandomNumber,regUserName:name}))
   
     }
     catch (error) {
@@ -26,7 +28,7 @@ export default function RegisterScreen({navigation}) {
       <StatusBar backgroundColor={'#9c60a2'}/>
       <TextInput
         style={styles.input}
-        placeholder='Enter your age'
+        placeholder='Register your Name'
         onChangeText={(value) => setName(value)}
       />
       <TouchableOpacity style={{ width: 250, backgroundColor: '#9c60a2', height: 40, marginBottom: 10, marginTop: 15, borderRadius: 5, justifyContent: 'center', alignItems: 'center' }} onPress={registerUser}>

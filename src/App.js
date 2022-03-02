@@ -12,13 +12,13 @@ const App = () => {
       <Stack.Navigator
         initialRouteName="RegisterScreen"
         screenOptions={{
-          headerTitleAlign: 'center',
+          
           headerStyle: {
             backgroundColor: '#9c60a2'
           },
           headerTintColor: '#ffffff',
           headerTitleStyle: {
-            fontSize: 25,
+            fontSize: 18,
             fontWeight: 'bold'
           }
         }}
