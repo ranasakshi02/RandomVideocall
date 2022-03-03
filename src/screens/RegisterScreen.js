@@ -15,7 +15,7 @@ export default function RegisterScreen({navigation}) {
         id:RandomNumber,
         name: name,
         isRequested:false
-      }).then((nav)=>navigation.navigate('CallScreen',{regUserId:RandomNumber,regUserName:name}))
+      }).then((nav)=>navigation.navigate('ConnectUserScreen',{regUserId:RandomNumber,regUserName:name}))
   
     }
     catch (error) {

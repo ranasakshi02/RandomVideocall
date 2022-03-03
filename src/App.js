@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import RegisterScreen from './screens/RegisterScreen';
+import ConnectUserScreen from './screens/ConnectUserScreen';
 import CallScreen from './screens/CallScreen';
 const Stack = createStackNavigator();
 const App = () => {
@@ -12,7 +13,6 @@ const App = () => {
       <Stack.Navigator
         initialRouteName="RegisterScreen"
         screenOptions={{
-          
           headerStyle: {
             backgroundColor: '#9c60a2'
           },
@@ -28,6 +28,10 @@ const App = () => {
           component={RegisterScreen}
         />
         <Stack.Screen
+          name="ConnectUserScreen"
+          component={ConnectUserScreen}
+        />
+         <Stack.Screen
           name="CallScreen"
           component={CallScreen}
         />

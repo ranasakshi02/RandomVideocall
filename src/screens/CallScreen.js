@@ -1,65 +1,16 @@
-import { StyleSheet, Text, View, StatusBar, ImageBackground, TouchableOpacity, LogBox } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
 import React, { useEffect, useState, useRef, useLayoutEffect } from 'react'
-
-import firestore from '@react-native-firebase/firestore';
 import { MediaStream, RTCIceCandidate, RTCPeerConnection, EventOnAddStream, RTCSessionDescription } from 'react-native-webrtc';
 import GettingCall from '../components/GettingCall';
 import Video from '../components/Video';
 import Button from '../components/Button';
+import firestore from '@react-native-firebase/firestore';
 import Utils from '../Utils';
-LogBox.ignoreAllLogs()
 const configuration = { "iceServers": [{ "url": "stun:stun.l.google.com:19302" }] };
 
-export default function CallScreen({ route }) {
-  const { regUserName } = route.params;
-  const { regUserId } = route.params;
-  const [users, setUsers] = useState('')
-  var tempUser = null;
-  useEffect(() => {
-    // getUsers()
-    const userRef = firestore().collection('users').where('id', '!=', regUserId)
-    const unsubscribe = userRef.onSnapshot((querySnap) => {
-      const allUsers = querySnap.docs.map(docSnap =>
-        docSnap.data())
-      setUsers(allUsers)
-    })
-    return () => { unsubscribe() }
 
-  }, [])
-  console.log(users)
-
-  const requestUser = async() => {
-    await firestore().collection('users').where('isRequested', '==', false).get()
-      .then(querySnap => {
-        querySnap.forEach(doc => {
-          doc.ref.update({
-            isRequested: true
-          })
-        })
-      }).then(() => alert("requested successfully..!"))
-    console.log('upate', users)
-  }
-
-  const connectUser = () => {
-    if (users) {
-      for (i = 0; i < users.length;) {
-        if (users[i].isRequested == true) {
-          tempUser = users[i].id;
-          console.log('connect with', tempUser);
-          console.log('connect with', users[i].name);
-          break;
-        }
-        i = i + 1;
-
-      }
-
-    }
-    if (tempUser == null) {
-      alert("Request User First")
-    }
-
-  }
-  //webrtc constants
+export default function CallScreen({route,navigation}) {
+     //webrtc constants
   const [localStream, setLocalStream] = useState(MediaStream | null)
   const [remoteStream, setRemoteStream] = useState(MediaStream | null)
   const [gettingCall, setGettingCall] = useState(false)
@@ -67,19 +18,24 @@ export default function CallScreen({ route }) {
   const flagConnection = useRef(false);
   const connectedUser = useRef(null);
 
-
+  const { callerId } = route.params;
+  const { calleeId } = route.params;
 
 
   //webrtc code
 
   useEffect(() => {
     
-    const docId = tempUser > regUserId ? regUserId + '-' + tempUser : tempUser + '-' + regUserId
+    const docId = calleeId > callerId ? callerId + '-' + calleeId : calleeId + '-' + callerId
+    
     const cRef = firestore().collection('meet').doc(docId).collection("Calls").doc('callId');
+
+    
     flagConnection.current = false;
     const subscribe = cRef.onSnapshot(snapshot => {
       const data = snapshot.data()
       //on answer start the call 
+      console.log(docId)
       if (pc.current && !pc.current.remoteDescription && data && data.answer) {
         pc.current.setRemoteDescription(new RTCSessionDescription(data.answer))
       }
@@ -99,6 +55,7 @@ export default function CallScreen({ route }) {
     })
     return () => {
       subscribe();
+      tempRef();
       subscribeDelete();
     }
   }, [])
@@ -122,17 +79,19 @@ export default function CallScreen({ route }) {
 
   };
   const create = async (receiver) => {
-    if (tempUser) {
+    if (calleeId) {
       console.log('calling');
       flagConnection.current = true;
       //setup webrtc
       await setupwebrtc();
+      console.log(calleeId)
+      console.log('reciever',receiver)
       //document for the call
       const otherUser = receiver;
       connectedUser.current = otherUser;
       console.log(connectedUser)
       console.log("calling to->" + otherUser)
-      const docId = tempUser > regUserId ? regUserId + '-' + tempUser : tempUser + '-' + regUserId
+      const docId = calleeId > callerId ? callerId + '-' + calleeId : calleeId + '-' + callerId
       const cRef = firestore().collection('meet').doc(docId).collection("Calls").doc('callId');
 
       //exchange the ice candidates between the caller and callee
@@ -161,7 +120,7 @@ export default function CallScreen({ route }) {
     console.log("joining the call")
     flagConnection.current = true;
     setGettingCall(false)
-    const docId = tempUser > regUserId ? regUserId + '-' + tempUser : tempUser + '-' + regUserId
+    const docId = calleeId > callerId ? callerId + '-' + calleeId : calleeId + '-' + callerId
     const cRef = firestore().collection('meet').doc(docId).collection("Calls").doc('callId');
     const offer = (await cRef.get()).data()?.offer;
     console.log('offer->', offer);
@@ -212,7 +171,7 @@ export default function CallScreen({ route }) {
   }
   const firebaseCleanUp = async () => {
     
-    const docId = tempUser > regUserId ? regUserId + '-' + tempUser : tempUser + '-' + regUserId
+    const docId = calleeId > callerId ? callerId + '-' + calleeId : calleeId + '-' + callerId
     const cRef = firestore().collection('meet').doc(docId).collection("Calls").doc('callId');
     if (cRef) {
       const calleeCandidate = await cRef.collection('callee').get();
@@ -274,25 +233,10 @@ const resetUser=async()=>{
     )
   }
 
-
   return (
-    <View style={{ flex: 1 }}>
-      <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000', marginRight: 10, marginLeft: 10 }}>Welcome {regUserName}..!</Text>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
-
-        <TouchableOpacity style={{ width: 170, backgroundColor: '#9c60a2', height: 40, marginBottom: 10, marginTop: 15, borderRadius: 5, justifyContent: 'center', alignItems: 'center' }} onPress={requestUser}>
-          <Text style={[{ marginLeft: 10, color: '#fff', fontSize: 17, fontWeight: '700', }]}>Request User</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={{ width: 170, backgroundColor: '#9c60a2', height: 40, marginBottom: 10, marginTop: 15, borderRadius: 5, justifyContent: 'center', alignItems: 'center' }} onPress={connectUser}>
-          <Text style={[{ marginLeft: 10, color: '#fff', fontSize: 17, fontWeight: '700', }]}>Connect User</Text>
-        </TouchableOpacity>
-      </View>
-      <View style={{ backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
-        <Button iconName={'videocam'} backgroundColor={'grey'} onPress={() => create(tempUser)} />
-      </View>
-
-    </View>
+    <View style={{ backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+    <Button iconName={'videocam'} backgroundColor={'grey'} onPress={() => create(calleeId)} />
+  </View>
   )
 }
 
-const styles = StyleSheet.create({})
