@@ -55,7 +55,6 @@ export default function CallScreen({route,navigation}) {
     })
     return () => {
       subscribe();
-      tempRef();
       subscribeDelete();
     }
   }, [])
@@ -217,7 +216,7 @@ const resetUser=async()=>{
             isRequested: false
           })
         })
-      })
+      }).then(()=>navigation.popToTop())
 }
   //display the getting call component
   if (gettingCall) {
